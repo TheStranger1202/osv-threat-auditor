@@ -1,7 +1,7 @@
 """Módulo de tema visual ergonómico (Dark Tactical / Cyber-Goth).
 
 Centraliza la paleta de colores, fuentes y configuración de ttk.Style
-para prevenir fatiga visual y mantener una estética sobria.
+para prevenir fatiga visual mediante funciones puras y constantes inmutables.
 """
 
 from __future__ import annotations
@@ -20,14 +20,14 @@ COLOR_TEXT_MAIN: Final[str] = "#d8dee9"     # Texto principal (Gris gélido legi
 COLOR_TEXT_MUTED: Final[str] = "#6c7689"    # Placeholders y ayudas (Atenuado)
 COLOR_TEXT_ACCENT: Final[str] = "#38bdf8"   # Cyan suave (Acentos y foco)
 
-# Semáforo de estados (Tonos pastel / desaturados para no cansar la vista)
+# Semáforo de estados (Tonos pastel / desaturados para prevenir fatiga visual)
 COLOR_STATUS_CLEAN: Final[str] = "#34d399"    # Verde esmeralda (Seguro)
 COLOR_STATUS_PATCH: Final[str] = "#fbbf24"    # Ámbar cálido (Parche disponible)
 COLOR_STATUS_ALERT: Final[str] = "#f87171"    # Carmesí suave (Zero-Day / Error)
 COLOR_BTN_PRIMARY: Final[str] = "#7c3aed"     # Púrpura táctico (Acción principal)
 COLOR_BTN_HOVER: Final[str] = "#6d28d9"       # Púrpura resaltado
 
-# Tipografías preferidas (con fallback a fuentes del sistema)
+# Tipografías monoespaciadas tácticas
 FONT_FAMILY: Final[str] = "Consolas" if tk.TkVersion >= 8.6 else "Courier"
 FONT_TITLE: Final[tuple[str, int, str]] = (FONT_FAMILY, 13, "bold")
 FONT_BODY: Final[tuple[str, int, str]] = (FONT_FAMILY, 10, "normal")
@@ -36,18 +36,14 @@ FONT_BUTTON: Final[tuple[str, int, str]] = (FONT_FAMILY, 10, "bold")
 
 
 def configure_app_theme(root: tk.Tk) -> ttk.Style:
-    """Configura los estilos globales de Tkinter y ttk en la ventana principal."""
+    """Configura los estilos globales de ttk aplicando la paleta táctica."""
     root.configure(bg=COLOR_BG_DARK)
 
     style = ttk.Style(root)
-    # Selecciona el motor de render 'clam' para permitir personalización total de colores
     style.theme_use("clam")
 
-    # Contenedores y Labels
-    style.configure(
-        "TFrame",
-        background=COLOR_BG_DARK,
-    )
+    # Contenedores y Etiquetas
+    style.configure("TFrame", background=COLOR_BG_DARK)
     style.configure(
         "Panel.TFrame",
         background=COLOR_BG_PANEL,
@@ -73,7 +69,7 @@ def configure_app_theme(root: tk.Tk) -> ttk.Style:
         font=FONT_TITLE,
     )
 
-    # Entradas de Texto y Selectores
+    # Selector Desplegable (Combobox)
     style.configure(
         "TCombobox",
         fieldbackground=COLOR_BG_INPUT,
@@ -91,7 +87,7 @@ def configure_app_theme(root: tk.Tk) -> ttk.Style:
         foreground=[("readonly", COLOR_TEXT_MAIN), ("focus", COLOR_TEXT_MAIN)],
     )
 
-    # Botones Tácticos
+    # Botones
     style.configure(
         "Primary.TButton",
         background=COLOR_BTN_PRIMARY,
@@ -104,19 +100,6 @@ def configure_app_theme(root: tk.Tk) -> ttk.Style:
         "Primary.TButton",
         background=[("active", COLOR_BTN_HOVER), ("disabled", COLOR_BORDER)],
         foreground=[("disabled", COLOR_TEXT_MUTED)],
-    )
-
-    style.configure(
-        "Secondary.TButton",
-        background=COLOR_BG_INPUT,
-        foreground=COLOR_TEXT_MAIN,
-        bordercolor=COLOR_BORDER,
-        font=FONT_BUTTON,
-        padding=(8, 5),
-    )
-    style.map(
-        "Secondary.TButton",
-        background=[("active", COLOR_BORDER)],
     )
 
     # Tabla de Inventario (Treeview)

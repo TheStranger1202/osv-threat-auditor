@@ -1,7 +1,7 @@
-"""Componentes visuales especializados para la GUI (Dark Tactical / Cyber-Goth).
+"""Factorías funcionales de componentes visuales (Dark Tactical).
 
-Implementa entradas con placeholders, autocompletado en tiempo real,
-smart-paste para dependencias y notificaciones en línea.
+Construye componentes GUI mediante clausuras y funciones puras, eliminando
+la herencia de clases y el acoplamiento a objetos mutables.
 """
 
 from __future__ import annotations
@@ -29,197 +29,218 @@ SMART_PASTE_REGEX: re.Pattern[str] = re.compile(
 )
 
 
-class PlaceholderEntry(tk.Entry):
-    """Entry de Tkinter con soporte para texto de ayuda (placeholder) y Smart-Paste."""
+def create_placeholder_entry(
+    parent: tk.Widget,
+    placeholder: str,
+    on_smart_paste: Callable[[str, str, str | None], None] | None = None,
+) -> dict[str, Any]:
+    """Factoría funcional para entradas de texto con placeholder y Smart-Paste.
 
-    def __init__(
-        self,
-        master: tk.Widget,
-        placeholder: str,
-        on_smart_paste: Callable[[str, str, str | None], None] | None = None,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(
-            master,
-            bg=COLOR_BG_INPUT,
-            fg=COLOR_TEXT_MAIN,
-            insertbackground=COLOR_TEXT_ACCENT,  # Color del cursor parpadeante
-            relief="solid",
-            borderwidth=1,
-            highlightthickness=1,
-            highlightbackground=COLOR_BORDER,
-            highlightcolor=COLOR_TEXT_ACCENT,
-            font=FONT_BODY,
-            *args,
-            **kwargs,
-        )
-        self.placeholder: str = placeholder
-        self.on_smart_paste: Callable[[str, str, str | None], None] | None = on_smart_paste
-        self._is_showing_placeholder: bool = False
+    Returns:
+        dict: Contenedor con el widget y sus funciones puras de acceso.
+    """
+    entry = tk.Entry(
+        parent,
+        bg=COLOR_BG_INPUT,
+        fg=COLOR_TEXT_MAIN,
+        insertbackground=COLOR_TEXT_ACCENT,
+        relief="solid",
+        borderwidth=1,
+        highlightthickness=1,
+        highlightbackground=COLOR_BORDER,
+        highlightcolor=COLOR_TEXT_ACCENT,
+        font=FONT_BODY,
+    )
 
-        self.bind("<FocusIn>", self._handle_focus_in)
-        self.bind("<FocusOut>", self._handle_focus_out)
-        self.bind("<<Paste>>", self._handle_paste)
+    showing_placeholder = [False]
 
-        self.put_placeholder()
+    def put_placeholder() -> None:
+        if not entry.get():
+            showing_placeholder[0] = True
+            entry.configure(fg=COLOR_TEXT_MUTED)
+            entry.delete(0, tk.END)
+            entry.insert(0, placeholder)
 
-    def put_placeholder(self) -> None:
-        """Restaura el placeholder visual si el campo está vacío."""
-        if not self.get():
-            self._is_showing_placeholder = True
-            self.configure(fg=COLOR_TEXT_MUTED)
-            self.delete(0, tk.END)
-            self.insert(0, self.placeholder)
-
-    def get_clean_value(self) -> str:
-        """Retorna el contenido real ignorando el texto del placeholder."""
-        if self._is_showing_placeholder:
+    def get_clean_value() -> str:
+        if showing_placeholder[0]:
             return ""
-        return self.get().strip()
+        return entry.get().strip()
 
-    def set_clean_value(self, value: str) -> None:
-        """Establece un valor explícito eliminando el placeholder."""
-        self._is_showing_placeholder = False
-        self.configure(fg=COLOR_TEXT_MAIN)
-        self.delete(0, tk.END)
-        self.insert(0, value)
+    def set_clean_value(value: str) -> None:
+        showing_placeholder[0] = False
+        entry.configure(fg=COLOR_TEXT_MAIN)
+        entry.delete(0, tk.END)
+        entry.insert(0, value)
 
-    def _handle_focus_in(self, _event: tk.Event[Any]) -> None:
-        if self._is_showing_placeholder:
-            self._is_showing_placeholder = False
-            self.delete(0, tk.END)
-            self.configure(fg=COLOR_TEXT_MAIN)
+    def on_focus_in(_event: tk.Event[Any]) -> None:
+        if showing_placeholder[0]:
+            showing_placeholder[0] = False
+            entry.delete(0, tk.END)
+            entry.configure(fg=COLOR_TEXT_MAIN)
 
-    def _handle_focus_out(self, _event: tk.Event[Any]) -> None:
-        if not self.get().strip():
-            self.put_placeholder()
+    def on_focus_out(_event: tk.Event[Any]) -> None:
+        if not entry.get().strip():
+            put_placeholder()
 
-    def _handle_paste(self, _event: tk.Event[Any]) -> str | None:
-        """Detecta pegado con formato 'nombre==versión' o 'nombre@versión'."""
-        if not self.on_smart_paste:
+    def on_paste(_event: tk.Event[Any]) -> str | None:
+        if not on_smart_paste:
             return None
-
         try:
-            clipboard_text = self.clipboard_get().strip()
+            clipboard_text = entry.clipboard_get().strip()
         except tk.TclError:
             return None
 
         match = SMART_PASTE_REGEX.match(clipboard_text)
         if match:
             parsed = match.groupdict()
-            self.on_smart_paste(
-                parsed["name"],
-                parsed["ver"],
-                parsed.get("eco"),
-            )
-            return "break"  # Interrumpe el pegado estándar de Tkinter
+            on_smart_paste(parsed["name"], parsed["ver"], parsed.get("eco"))
+            return "break"
         return None
 
+    entry.bind("<FocusIn>", on_focus_in)
+    entry.bind("<FocusOut>", on_focus_out)
+    entry.bind("<<Paste>>", on_paste)
 
-class EcosystemCombobox(ttk.Combobox):
-    """Combobox reactivo con autocompletado y búsqueda predictiva sobre el catálogo OSV."""
+    put_placeholder()
 
-    def __init__(
-        self,
-        master: tk.Widget,
-        catalog: Sequence[Mapping[str, Any]],
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        self.catalog: Sequence[Mapping[str, Any]] = catalog
-        self.all_labels: list[str] = [str(item.get("label", "")) for item in catalog]
+    return {
+        "widget": entry,
+        "get_value": get_clean_value,
+        "set_value": set_clean_value,
+        "reset": put_placeholder,
+    }
 
-        super().__init__(
-            master,
-            values=self.all_labels,
-            font=FONT_BODY,
-            *args,
-            **kwargs,
-        )
-        self.bind("<KeyRelease>", self._on_key_release)
 
-    def _on_key_release(self, event: tk.Event[Any]) -> None:
-        """Filtra las opciones desplegables mientras el usuario escribe."""
-        # Ignorar teclas de navegación
+def create_ecosystem_combobox(
+    parent: tk.Widget,
+    catalog: Sequence[Mapping[str, Any]],
+    on_match_callback: Callable[[str | None, str | None], None] | None = None,
+) -> dict[str, Any]:
+    """Factoría funcional para selector predictivo de ecosistemas con autocompletado."""
+    all_labels = [str(item.get("label", "")) for item in catalog]
+    matched_label: list[str | None] = [None]
+
+    combo = ttk.Combobox(
+        parent,
+        values=all_labels,
+        font=FONT_BODY,
+        height=16,
+    )
+
+    def on_key_release(event: tk.Event[Any]) -> None:
         if event.keysym in ("Up", "Down", "Return", "Escape", "Tab"):
             return
 
-        query = self.get().strip().lower()
+        query = combo.get().strip().lower()
         if not query:
-            self["values"] = self.all_labels
+            combo["values"] = all_labels
+            matched_label[0] = None
+            if on_match_callback:
+                on_match_callback(None, None)
             return
 
         filtered: list[str] = []
-        for item in self.catalog:
+        best_match_eco: str | None = None
+        best_match_label: str | None = None
+
+        for item in catalog:
             label = str(item.get("label", ""))
-            eco = str(item.get("ecosystem", "")).lower()
+            eco = str(item.get("ecosystem", ""))
             aliases = [str(a).lower() for a in item.get("aliases", [])]
 
-            # Coincidencia por etiqueta visual, ecosistema o alias
-            if query in label.lower() or query in eco or any(query in a for a in aliases):
+            if query == eco.lower() or query in aliases or query in label.lower():
                 filtered.append(label)
+                if not best_match_eco:
+                    best_match_eco = eco
+                    best_match_label = label
 
-        self["values"] = filtered if filtered else [f"[Sin coincidencia: '{query}']"]
+        combo["values"] = filtered if filtered else [f"[Sin coincidencia: '{query}']"]
+        matched_label[0] = best_match_label
 
-    def get_selected_ecosystem(self) -> str:
-        """Obtiene el nombre técnico de OSV correspondiente a la opción seleccionada."""
-        current_text = self.get().strip()
-        for item in self.catalog:
+        if on_match_callback:
+            on_match_callback(best_match_label, best_match_eco)
+
+    def on_tab_complete(_event: tk.Event[Any]) -> str | None:
+        if matched_label[0]:
+            combo.set(matched_label[0])
+            for item in catalog:
+                if item.get("label") == matched_label[0]:
+                    if on_match_callback:
+                        on_match_callback(matched_label[0], str(item.get("ecosystem", "")))
+                    break
+        return None
+
+    def on_selected(_event: tk.Event[Any]) -> None:
+        current_text = combo.get().strip()
+        for item in catalog:
+            if current_text == item.get("label"):
+                if on_match_callback:
+                    on_match_callback(current_text, str(item.get("ecosystem", "")))
+                return
+
+    def get_selected_ecosystem() -> str:
+        current_text = combo.get().strip()
+        for item in catalog:
             if current_text == item.get("label"):
                 return str(item.get("ecosystem", ""))
-        # Si el usuario escribió un alias o el nombre directamente
         return current_text
 
-    def set_ecosystem_by_name(self, ecosystem_name: str) -> None:
-        """Selecciona el label correspondiente a partir de un nombre de ecosistema."""
+    def set_ecosystem_by_name(ecosystem_name: str) -> None:
         target = ecosystem_name.strip().lower()
-        for item in self.catalog:
+        for item in catalog:
             if str(item.get("ecosystem", "")).lower() == target:
-                self.set(str(item.get("label", "")))
+                label = str(item.get("label", ""))
+                combo.set(label)
+                if on_match_callback:
+                    on_match_callback(label, str(item.get("ecosystem", "")))
                 return
-        self.set(ecosystem_name)
+        combo.set(ecosystem_name)
+
+    combo.bind("<KeyRelease>", on_key_release)
+    combo.bind("<Tab>", on_tab_complete)
+    combo.bind("<<ComboboxSelected>>", on_selected)
+
+    return {
+        "widget": combo,
+        "get_selected": get_selected_ecosystem,
+        "set_by_name": set_ecosystem_by_name,
+        "set_text": combo.set,
+    }
 
 
-class FeedbackBanner(tk.Frame):
-    """Banner de notificación en línea para feedback inmediato sin diálogos modales."""
+def create_feedback_banner(parent: tk.Widget) -> dict[str, Any]:
+    """Factoría funcional para el banner de estado en línea sin diálogos modales."""
+    banner_frame = tk.Frame(parent, bg=COLOR_BG_PANEL, relief="flat")
+    label = tk.Label(
+        banner_frame,
+        text="",
+        bg=COLOR_BG_PANEL,
+        fg=COLOR_TEXT_MAIN,
+        font=FONT_MUTED,
+        anchor="w",
+        padx=10,
+        pady=4,
+    )
+    label.pack(fill="x", expand=True)
 
-    def __init__(self, master: tk.Widget, *args: Any, **kwargs: Any) -> None:
-        super().__init__(master, bg=COLOR_BG_PANEL, relief="flat", *args, **kwargs)
-        self.label: tk.Label = tk.Label(
-            self,
-            text="",
-            bg=COLOR_BG_PANEL,
-            fg=COLOR_TEXT_MAIN,
-            font=FONT_MUTED,
-            anchor="w",
-            padx=10,
-            pady=4,
-        )
-        self.label.pack(fill="x", expand=True)
-        self._clear_timer_id: str | None = None
+    timer_id: list[str | None] = [None]
 
-    def show_success(self, message: str, timeout_ms: int = 3500) -> None:
-        """Muestra una confirmación en verde y programa su limpieza automática."""
-        self._show_message(f"✓  {message}", COLOR_STATUS_CLEAN, timeout_ms)
+    def clear() -> None:
+        if timer_id[0]:
+            banner_frame.after_cancel(timer_id[0])
+            timer_id[0] = None
+        label.configure(text="", fg=COLOR_TEXT_MAIN)
 
-    def show_error(self, message: str) -> None:
-        """Muestra un error en carmesí orientado a la solución (permanece visible)."""
-        self._show_message(f"⚠  {message}", COLOR_STATUS_ALERT, timeout_ms=None)
-
-    def show_info(self, message: str, timeout_ms: int = 3500) -> None:
-        """Muestra un aviso informativo en cyan."""
-        self._show_message(f"ℹ  {message}", COLOR_TEXT_ACCENT, timeout_ms)
-
-    def clear(self) -> None:
-        """Limpia el mensaje visible inmediatamente."""
-        if self._clear_timer_id:
-            self.after_cancel(self._clear_timer_id)
-            self._clear_timer_id = None
-        self.label.configure(text="", fg=COLOR_TEXT_MAIN)
-
-    def _show_message(self, text: str, color: str, timeout_ms: int | None) -> None:
-        self.clear()
-        self.label.configure(text=text, fg=color)
+    def show_message(text: str, color: str, timeout_ms: int | None) -> None:
+        clear()
+        label.configure(text=text, fg=color)
         if timeout_ms:
-            self._clear_timer_id = self.after(timeout_ms, self.clear)
+            timer_id[0] = banner_frame.after(timeout_ms, clear)
+
+    return {
+        "widget": banner_frame,
+        "show_success": lambda msg, t=3500: show_message(f"✓  {msg}", COLOR_STATUS_CLEAN, t),
+        "show_error": lambda msg: show_message(f"⚠  {msg}", COLOR_STATUS_ALERT, None),
+        "show_info": lambda msg, t=3500: show_message(f"ℹ  {msg}", COLOR_TEXT_ACCENT, t),
+        "clear": clear,
+    }
