@@ -1,13 +1,17 @@
-"""Módulo de lógica y clasificación de mitigaciones.
+"""Módulo de lógica y clasificación de mitigaciones contra OSV.dev.
 
-Evalúa el esquema OSV de cada vulnerabilidad para determinar la disponibilidad
-de versiones parcheadas (fixed) o la ausencia de parches oficiales (Zero-Day).
+Evalúa el esquema OSV para determinar la disponibilidad de versiones 
+parcheadas (fixed) o la ausencia de parches oficiales (Zero-Day).
+Incluye el motor de consultas por lotes (batch).
 """
 
 from __future__ import annotations
 
+import requests
 from typing import Any, Mapping, Sequence
 from packaging.version import InvalidVersion, parse as parse_version
+
+OSV_QUERYBATCH_URL = "https://api.osv.dev/v1/querybatch"
 
 
 def parse_safe_version(version_str: str) -> Any:
@@ -21,59 +25,35 @@ def parse_safe_version(version_str: str) -> Any:
 def select_best_fixed_version(
     candidates: Sequence[str], current_version: str
 ) -> str | None:
-    """Función pura que selecciona la versión de parche más adecuada.
-
-    Filtra candidatos descartando versiones inferiores a la versión instalada
-    (evitando sugerir ramas obsoletas) y selecciona la versión mínima superior.
-
-    Args:
-        candidates: Lista de versiones declaradas en los eventos 'fixed'.
-        current_version: Versión actualmente en uso en el inventario.
-
-    Returns:
-        str | None: Versión recomendada para actualización, o None si no hay candidatos válidos.
-    """
+    """Función pura que selecciona la versión de parche más adecuada."""
     if not candidates:
         return None
 
     parsed_current = parse_safe_version(current_version)
-
-    # Filtrar únicamente versiones estrictamente mayores a la actual
     strictly_higher: list[str] = []
+    
     for cand in candidates:
         parsed_cand = parse_safe_version(cand)
         try:
             if parsed_cand > parsed_current:
                 strictly_higher.append(cand)
         except TypeError:
-            # Fallback en caso de comparar tipos incompatibles
             if str(parsed_cand) > str(parsed_current):
                 strictly_higher.append(cand)
 
     if strictly_higher:
-        # Ordenar funcionalmente para recomendar el menor salto de versión seguro
         try:
             return min(strictly_higher, key=parse_safe_version)
         except TypeError:
             return min(strictly_higher)
 
-    # Si ninguna es mayor pero hay candidatos, retornar el último parche declarado
     return candidates[-1]
 
 
 def extract_fixed_version(
     vuln_data: Mapping[str, Any], package_name: str, current_version: str
 ) -> str | None:
-    """Inspecciona los eventos de rangos afectados en búsqueda de un parche ('fixed').
-
-    Args:
-        vuln_data: Estructura individual de una vulnerabilidad devuelta por OSV.
-        package_name: Nombre del paquete auditado para filtrar bloques relevantes.
-        current_version: Versión del inventario local para contextualizar el parche.
-
-    Returns:
-        str | None: Cadena con la versión parcheada recomendada, o None si es Zero-Day.
-    """
+    """Inspecciona los eventos de rangos afectados en búsqueda de un parche ('fixed')."""
     affected_blocks = vuln_data.get("affected", [])
     collected_fixes: list[str] = []
 
@@ -92,47 +72,55 @@ def extract_fixed_version(
     return select_best_fixed_version(tuple(collected_fixes), current_version)
 
 
-def extract_severity_score(vuln_data: Mapping[str, Any]) -> str:
-    """Extrae la métrica o severidad declarada en el registro de la vulnerabilidad."""
-    severities = vuln_data.get("severity", [])
-    if isinstance(severities, list) and severities:
-        first_sev = severities[0]
-        if isinstance(first_sev, dict):
-            return str(first_sev.get("score", "Severidad no especificada"))
-    return "Severidad no especificada"
-
-
-def process_vulnerability_record(
-    vuln: Mapping[str, Any],
-    dep: Mapping[str, str],
-) -> dict[str, Any]:
-    """Transforma una vulnerabilidad cruda en un registro de auditoría estandarizado."""
-    vuln_id = str(vuln.get("id", "ID-DESCONOCIDO"))
-    summary = str(vuln.get("summary", "Sin resumen disponible.")).strip()
-    fixed_version = extract_fixed_version(vuln, dep["name"], dep["version"])
-    severity = extract_severity_score(vuln)
-
-    return {
-        "id": vuln_id,
-        "package_name": dep["name"],
-        "ecosystem": dep["ecosystem"],
-        "current_version": dep["version"],
-        "summary": summary,
-        "severity": severity,
-        "has_patch": fixed_version is not None,
-        "fixed_version": fixed_version,
-    }
-
-
-def evaluate_findings(
-    scan_results: Sequence[Mapping[str, Any]],
+def audit_dependencies(
+    dependencies: Sequence[Mapping[str, str]]
 ) -> tuple[dict[str, Any], ...]:
-    """Procesa de forma pura todos los hallazgos reportados por el escáner."""
-    findings = []
+    """Evalúa un lote de dependencias contra OSV.dev y aplica la lógica de parcheo.
+    
+    Returns:
+        Una nueva tupla de diccionarios enriquecida con 'audit_status' y 'mitigation'.
+    """
+    if not dependencies:
+        return ()
 
-    for item in scan_results:
-        dep = item["dependency"]
-        for vuln in item["vulnerabilities"]:
-            findings.append(process_vulnerability_record(vuln, dep))
+    queries = []
+    for dep in dependencies:
+        queries.append({
+            "package": {"ecosystem": dep.get("ecosystem", ""), "name": dep.get("name", "")},
+            "version": dep.get("version", "")
+        })
 
-    return tuple(findings)
+    # Petición a la API oficial
+    response = requests.post(OSV_QUERYBATCH_URL, json={"queries": queries}, timeout=20)
+    response.raise_for_status()
+    
+    results = response.json().get("results", [])
+    audit_report = []
+
+    for dep, result in zip(dependencies, results):
+        vulns = result.get("vulns", [])
+        enriched_dep = dict(dep)
+        enriched_dep["vulns"] = vulns
+        
+        if not vulns:
+            enriched_dep["audit_status"] = "clean"
+            enriched_dep["mitigation"] = "[CLEAN] Sin riesgos conocidos"
+        else:
+            # Usar tu lógica experta para buscar el mejor parche entre todas las vulnerabilidades
+            best_patch = None
+            for vuln in vulns:
+                patch = extract_fixed_version(vuln, dep.get("name", ""), dep.get("version", ""))
+                if patch:
+                    best_patch = patch
+                    break # Con un parche disponible basta para cambiar el semáforo
+
+            if best_patch:
+                enriched_dep["audit_status"] = "patch"
+                enriched_dep["mitigation"] = f"[UPGRADE -> {best_patch}] Parche disponible"
+            else:
+                enriched_dep["audit_status"] = "alert"
+                enriched_dep["mitigation"] = f"[CRITICAL] {len(vulns)} alerta(s) (Zero-Day/Sin parche)"
+            
+        audit_report.append(enriched_dep)
+
+    return tuple(audit_report)
