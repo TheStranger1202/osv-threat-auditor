@@ -1,93 +1,49 @@
 # OSV Threat Auditor
 
-> **Auditor determinista de dependencias con mitigación híbrida y costo cero.**  
-> Diseñado para identificar vulnerabilidades confirmadas en entornos de producción y generar planes de remediación accionables sin incurrir en costos de tokens de IA.
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue.svg)
+![OSV.dev](https://img.shields.io/badge/Powered_by-OSV.dev-purple.svg)
 
----
+Una herramienta de escritorio con interfaz gráfica (GUI) para auditar vulnerabilidades en dependencias de software, respaldada por la base de datos oficial de Google **OSV.dev**. 
 
-## 🎯 Propuesta de Valor y Arquitectura
+Diseñada con una estética táctica (*cyber-goth*) y una arquitectura funcional, permite a los analistas de seguridad y desarrolladores escanear proyectos enteros sin necesidad de usar la terminal ni instalar complejas cadenas de dependencias.
 
-Las herramientas tradicionales de ciberseguridad basadas puramente en LLMs sufren de alucinaciones, cuotas de API costosas y exposición de datos privados. Por otro lado, los escáneres estáticos tradicionales reportan falsos positivos sin contextualizar el ciclo de vida del software.
+## ✨ Características Principales
 
-**OSV Threat Auditor** resuelve este problema mediante un enfoque híbrido:
-* **Costo Cero ($0):** Utiliza la infraestructura pública y gratuita de **OSV.dev** (mantenida por Google y la OpenSSF).
-* **Determinismo Matemático:** Cruza directamente las versiones en uso contra rangos de parches oficiales (`fixed`), garantizando cero alucinaciones.
-* **Mitigación Accionable:** Genera de forma instantánea el comando o la versión exacta a la cual actualizar la librería.
-* **Asistencia Híbrida para Zero-Days:** Si una vulnerabilidad no cuenta con un parche disponible en el mercado, el motor genera un *prompt* técnico preconfigurado para consultar un LLM de confianza sin requerir integración con APIs de pago.
-* **Prevención de Fatiga de Alertas:** Incorpora una caché de estado local para notificar cada CVE una única vez.
-* **Paradigma Funcional Puro:** Desarrollado bajo principios de inmutabilidad, funciones puras y cero dependencias de Programación Orientada a Objetos (OOP).
+* **Auditoría Asíncrona:** Motor de red basado en `ThreadPoolExecutor` que realiza consultas por lotes (batch) e hidrata los datos en paralelo sin congelar la interfaz.
+* **Extracción Profunda de Parches:** Algoritmo recursivo que inspecciona los manifiestos JSON de OSV para descubrir versiones de remediación (`fixed`), filtrando automáticamente hashes de Git (SHA-1) para mostrar únicamente versiones semánticas limpias.
+* **Smart-Paste:** Pega dependencias directamente con el formato `paquete==version` (ej. `django==1.11.0`) y el sistema autocompletará los campos.
+* **Catálogo Integrado:** Selector predictivo con más de 40 ecosistemas soportados (PyPI, npm, Maven, Go, Rust, AlmaLinux, etc.).
+* **Arquitectura Inmutable:** Estado gestionado mediante clausuras y funciones puras, garantizando persistencia atómica en disco (`data/inventory.json`).
 
----
+## 🚀 Instalación (Usuarios Finales)
 
-## 📂 Estructura del Repositorio
+No necesitas instalar Python. Descarga el ejecutable para tu sistema operativo y ábrelo directamente:
 
-```text
-.
-├── data/
-│   ├── inventory.json        # Inventario de componentes auditados
-│   └── cache.json            # Histórico de vulnerabilidades procesadas (ignorado en Git)
-├── docs/
-│   ├── architecture.md       # Diagramas y flujos de datos
-│   ├── manual_de_uso.md      # Manual operativo y guía de extensibilidad
-│   ├── data_schemas.md       # Contratos JSON
-│   └── testing.md            # Estrategia TDD
-├── src/
-│   ├── __init__.py
-│   ├── auditor.py            # Motor de clasificación y cruce de versiones
-│   ├── config.py             # Configuración central y validación funcional
-│   ├── reporter.py           # Formateo de Markdown y generación de prompts
-│   └── scanner.py            # Cliente HTTP con Exponential Backoff
-├── tests/
-│   └── test_auditor.py       # Pruebas unitarias
-├── .gitignore
-├── main.py                   # Orquestador y punto de entrada CLI
-├── pytest.ini                # Configuración del entorno de pruebas
-├── README.md
-└── requirements.txt          # Dependencias fijadas (Lockfile)
-```
+1. Ve a la pestaña **[Releases](../../releases)** del repositorio.
+2. Descarga el binario correspondiente a tu sistema (Windows, Linux o macOS).
+3. En Linux/macOS, recuerda otorgar permisos de ejecución (`chmod +x OSV_Threat_Auditor-Linux`) la primera vez.
 
----
+## 🛠️ Desarrollo (Compilación Local)
 
-## 🚀 Inicio Rápido
 
-### 1. Requisitos Previos
-* Python 3.10 o superior.
-* Entorno virtual de Python (`venv`).
+Si deseas modificar el código o compilar el proyecto manualmente:
 
-### 2. Instalación
-```bash
-# Clonar el repositorio
-git clone <URL_DEL_REPOSITORIO>
-cd gemini_vul_mitigation
+1. **Clona el repositorio:**
+   ```bash
+   git clone [https://github.com/TuUsuario/osv-threat-auditor.git](https://github.com/TuUsuario/osv-threat-auditor.git)
+   cd osv-threat-auditor
 
-# Crear y activar el entorno virtual
-python3 -m venv .venv
-source .venv/bin/activate
+3. **Instala las dependencias:**
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate  # En Windows: .venv\Scripts\activate
+    pip install -r requirements.txt
 
-# Instalar dependencias exactas
-pip install -r requirements.txt
-```
+3. **Ejecuta la interfaz en modo desarrollo:**
+    ```bash
+    python -m src.gui.app
 
-### 3. Ejecución de Pruebas Unitarias
-```bash
-pytest tests/
-```
-
-### 4. Ejecución del Escáner
-```bash
-python main.py
-```
-
----
-
-## ⚙️ Códigos de Salida para CI/CD
-
-El script `main.py` retorna códigos de salida estándar para integrarse en pipelines automatizados:
-
-| Código | Significado | Acción recomendada en Pipeline |
-| :---: | :--- | :--- |
-| `0` | **Éxito:** Sin vulnerabilidades o todas cuentan con parche reportado. | Permitir despliegue (Build Success). |
-| `1` | **Alerta Crítica:** Se detectó al menos un Zero-Day activo sin parche. | Detener despliegue / Notificar al equipo de seguridad. |
-| `2` | **Fallo Operativo:** Inventario malformado o error irrecuperable de red. | Marcar fallo de infraestructura en el pipeline. |
-
-Para instrucciones sobre cómo configurar el inventario corporativo real, depurar la caché o integrar nuevas bases de datos de vulnerabilidades, consulta el [Manual de Operación y Extensibilidad](docs/manual_de_uso.md).
+4. **Genera el ejecutable con PyInstaller:**
+    ```bash
+    pyinstaller auditor.spec --clean
