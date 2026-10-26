@@ -1,0 +1,365 @@
+[
+  {
+    "ecosystem": "AlmaLinux",
+    "label": "AlmaLinux (Sistema / OS)",
+    "aliases": [
+      "almalinux"
+    ]
+  },
+  {
+    "ecosystem": "Alpaquita",
+    "label": "Alpaquita (Sistema / OS)",
+    "aliases": [
+      "alpaquita"
+    ]
+  },
+  {
+    "ecosystem": "Alpine",
+    "label": "Alpine (Sistema / OS)",
+    "aliases": [
+      "alpine"
+    ]
+  },
+  {
+    "ecosystem": "Android",
+    "label": "Android (Sistema / OS)",
+    "aliases": [
+      "android"
+    ]
+  },
+  {
+    "ecosystem": "Azure Linux",
+    "label": "Azure Linux (Sistema / OS)",
+    "aliases": [
+      "azure linux"
+    ]
+  },
+  {
+    "ecosystem": "BellSoft Hardened Containers",
+    "label": "BellSoft Hardened Containers (Sistema / OS)",
+    "aliases": [
+      "bellsoft hardened containers"
+    ]
+  },
+  {
+    "ecosystem": "Bitnami",
+    "label": "Bitnami (Sistema / OS)",
+    "aliases": [
+      "bitnami"
+    ]
+  },
+  {
+    "ecosystem": "CRAN",
+    "label": "CRAN (Sistema / OS)",
+    "aliases": [
+      "cran"
+    ]
+  },
+  {
+    "ecosystem": "Chainguard",
+    "label": "Chainguard (Sistema / OS)",
+    "aliases": [
+      "chainguard"
+    ]
+  },
+  {
+    "ecosystem": "CleanStart",
+    "label": "CleanStart (Sistema / OS)",
+    "aliases": [
+      "cleanstart"
+    ]
+  },
+  {
+    "ecosystem": "Debian",
+    "label": "Debian (Sistema / OS)",
+    "aliases": [
+      "debian"
+    ]
+  },
+  {
+    "ecosystem": "Echo",
+    "label": "Echo (Sistema / OS)",
+    "aliases": [
+      "echo"
+    ]
+  },
+  {
+    "ecosystem": "GHC",
+    "label": "GHC (Sistema / OS)",
+    "aliases": [
+      "ghc"
+    ]
+  },
+  {
+    "ecosystem": "GIT",
+    "label": "GIT (Sistema / OS)",
+    "aliases": [
+      "git"
+    ]
+  },
+  {
+    "ecosystem": "GSD",
+    "label": "GSD (Sistema / OS)",
+    "aliases": [
+      "gsd"
+    ]
+  },
+  {
+    "ecosystem": "GitHub Actions",
+    "label": "GitHub Actions (Sistema / OS)",
+    "aliases": [
+      "github actions"
+    ]
+  },
+  {
+    "ecosystem": "Go",
+    "label": "Go (Golang)",
+    "aliases": [
+      "go",
+      "golang",
+      "gin",
+      "fiber"
+    ]
+  },
+  {
+    "ecosystem": "Hackage",
+    "label": "Hackage (Sistema / OS)",
+    "aliases": [
+      "hackage"
+    ]
+  },
+  {
+    "ecosystem": "Hex",
+    "label": "Elixir / Erlang (Hex)",
+    "aliases": [
+      "elixir",
+      "erlang",
+      "mix",
+      "phoenix"
+    ]
+  },
+  {
+    "ecosystem": "Julia",
+    "label": "Julia (Sistema / OS)",
+    "aliases": [
+      "julia"
+    ]
+  },
+  {
+    "ecosystem": "Linux",
+    "label": "Linux (Sistema / OS)",
+    "aliases": [
+      "linux"
+    ]
+  },
+  {
+    "ecosystem": "Mageia",
+    "label": "Mageia (Sistema / OS)",
+    "aliases": [
+      "mageia"
+    ]
+  },
+  {
+    "ecosystem": "Maven",
+    "label": "Java / Kotlin (Maven)",
+    "aliases": [
+      "java",
+      "jvm",
+      "kotlin",
+      "scala",
+      "spring",
+      "spring-boot",
+      "gradle"
+    ]
+  },
+  {
+    "ecosystem": "MinimOS",
+    "label": "MinimOS (Sistema / OS)",
+    "aliases": [
+      "minimos"
+    ]
+  },
+  {
+    "ecosystem": "NuGet",
+    "label": ".NET / C# (NuGet)",
+    "aliases": [
+      "dotnet",
+      "c#",
+      "csharp",
+      "nuget",
+      "aspnet"
+    ]
+  },
+  {
+    "ecosystem": "OSS-Fuzz",
+    "label": "OSS-Fuzz (Sistema / OS)",
+    "aliases": [
+      "oss-fuzz"
+    ]
+  },
+  {
+    "ecosystem": "Packagist",
+    "label": "PHP (Packagist)",
+    "aliases": [
+      "php",
+      "composer",
+      "laravel",
+      "symfony"
+    ]
+  },
+  {
+    "ecosystem": "Pub",
+    "label": "Dart / Flutter (Pub)",
+    "aliases": [
+      "flutter",
+      "dart",
+      "pub"
+    ]
+  },
+  {
+    "ecosystem": "PyPI",
+    "label": "Python (PyPI)",
+    "aliases": [
+      "python",
+      "pip",
+      "py",
+      "django",
+      "fastapi",
+      "flask"
+    ]
+  },
+  {
+    "ecosystem": "Red Hat",
+    "label": "Red Hat (Sistema / OS)",
+    "aliases": [
+      "red hat"
+    ]
+  },
+  {
+    "ecosystem": "Rocky Linux",
+    "label": "Rocky Linux (Sistema / OS)",
+    "aliases": [
+      "rocky linux"
+    ]
+  },
+  {
+    "ecosystem": "Root",
+    "label": "Root (Sistema / OS)",
+    "aliases": [
+      "root"
+    ]
+  },
+  {
+    "ecosystem": "RubyGems",
+    "label": "Ruby (RubyGems)",
+    "aliases": [
+      "ruby",
+      "rails",
+      "gem"
+    ]
+  },
+  {
+    "ecosystem": "SUSE",
+    "label": "SUSE (Sistema / OS)",
+    "aliases": [
+      "suse"
+    ]
+  },
+  {
+    "ecosystem": "SwiftURL",
+    "label": "Swift (Swift Package Manager)",
+    "aliases": [
+      "swift",
+      "spm",
+      "apple",
+      "ios"
+    ]
+  },
+  {
+    "ecosystem": "TuxCare",
+    "label": "TuxCare (Sistema / OS)",
+    "aliases": [
+      "tuxcare"
+    ]
+  },
+  {
+    "ecosystem": "UVI",
+    "label": "UVI (Sistema / OS)",
+    "aliases": [
+      "uvi"
+    ]
+  },
+  {
+    "ecosystem": "Ubuntu",
+    "label": "Ubuntu (Sistema / OS)",
+    "aliases": [
+      "ubuntu"
+    ]
+  },
+  {
+    "ecosystem": "VSCode",
+    "label": "VSCode (Sistema / OS)",
+    "aliases": [
+      "vscode"
+    ]
+  },
+  {
+    "ecosystem": "Wolfi",
+    "label": "Wolfi (Sistema / OS)",
+    "aliases": [
+      "wolfi"
+    ]
+  },
+  {
+    "ecosystem": "[EMPTY]",
+    "label": "[EMPTY] (Sistema / OS)",
+    "aliases": [
+      "[empty]"
+    ]
+  },
+  {
+    "ecosystem": "crates.io",
+    "label": "Rust (crates.io)",
+    "aliases": [
+      "rust",
+      "cargo",
+      "tokio",
+      "serde"
+    ]
+  },
+  {
+    "ecosystem": "npm",
+    "label": "JavaScript / Node.js (npm)",
+    "aliases": [
+      "node",
+      "nodejs",
+      "js",
+      "typescript",
+      "ts",
+      "react",
+      "vue",
+      "express"
+    ]
+  },
+  {
+    "ecosystem": "opam",
+    "label": "opam (Sistema / OS)",
+    "aliases": [
+      "opam"
+    ]
+  },
+  {
+    "ecosystem": "openEuler",
+    "label": "openEuler (Sistema / OS)",
+    "aliases": [
+      "openeuler"
+    ]
+  },
+  {
+    "ecosystem": "openSUSE",
+    "label": "openSUSE (Sistema / OS)",
+    "aliases": [
+      "opensuse"
+    ]
+  }
+]
