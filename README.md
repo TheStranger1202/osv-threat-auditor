@@ -1,4 +1,4 @@
-# OSV Threat Auditor
+# OSV Threat Auditor [v1.1.0]
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue.svg)
@@ -61,7 +61,12 @@ Si deseas auditar el código, agregar funcionalidades o compilar el proyecto man
      ```
      *Acceso local:* `http://localhost:5000`
 
-4. **Generar el ejecutable standalone con PyInstaller:**
+4. **Ejecutar Suite de Pruebas Unitarias:**
+   ```bash
+   pytest
+   ```
+
+5. **Generar el ejecutable standalone con PyInstaller:**
    ```bash
    pyinstaller auditor.spec --clean
    ```
@@ -72,5 +77,5 @@ Si deseas auditar el código, agregar funcionalidades o compilar el proyecto man
 
 Para consultar las especificaciones internas de ingeniería, patrones de diseño y diagramas de componentes:
 
-* [**Arquitectura del Sistema y Diagramas**](docs/ARCHITECTURE.md): Flujo de datos, concurrencia de red y garantías de persistencia.
-* [**Referencia de Módulos de Código**](docs/MODULES.md): Desglose técnico archivo por archivo y catálogo de funciones.
+* [**Arquitectura del Sistema y Diagramas**](docs/arquitectura_del_sistema.md): Flujo de datos, concurrencia de red y garantías de persistencia.
+* [**Referencia de Módulos de Código**](docs/referencia_de_modulos.md): Desglose técnico archivo por archivo y catálogo de funciones.
