@@ -1,23 +1,53 @@
-# Referencia de Módulos de Código
+# Referencia de Módulos // OSV Threat Auditor
 
-La estructura funcional previene las dependencias circulares y aísla las responsabilidades en áreas de dominio muy específicas.
+Catálogo técnico de los archivos que conforman el proyecto y su rol dentro de la arquitectura.
 
-## 1. Núcleo (Core) y Persistencia
-*   **`src/config.py`:** Punto centralizado para resolución absoluta de rutas (Data/Cache). Contiene funciones de validación funcionales puras para la carga del catálogo y configura los *timeouts*.
-*   **`src/inventory_manager.py`:** Provee operaciones CRUD (Create, Read, Update, Delete) 100% puras (sin efectos secundarios en memoria) para mutar el inventario de dependencias. Contiene la lógica defensiva y la persistencia atómica.
-*   **`src/auditor.py`:** Motor de red de alto rendimiento. Se comunica con la API de OSV, filtra versiones mitigadas usando `SHA1_REGEX` (descartando así hashes de commits de Git inyectados erróneamente por algunos mantenedores), e hidrata los manifiestos mediante hilos.
-*   **`src/reporter.py`:** Módulo de presentación de datos para consola. Incluye funciones de mitigación activa, destacando la inyección de *prompts* estructurados en casos de vulnerabilidades Zero-Day para asistir con Inteligencia Artificial.
-*   **`src/scanner.py`:** *(Legacy)* Implementación lineal con algoritmo de *backoff* exponencial para consultas en redes altamente inestables.
+---
 
-## 2. Presentación: Módulo Web (`src/web/`)
-*   **`app.py`:** Servidor Flask minimalista. Envuelve el motor existente sin alterar las estructuras de datos. Gestiona el enrutamiento HTTP y transfiere la manipulación (Update/Edit) utilizando parámetros GET (`?edit=`) replicando el comportamiento de la interfaz local.
-*   **`templates/index.html`:** Interfaz web táctica (*Dark Tactical*) construida 100% en HTML5 y CSS3. No posee dependencias de JavaScript ni de terceros, manteniendo la superficie de ataque al mínimo posible.
+## 1. Raíz del Repositorio
 
-## 3. Presentación: Módulo Desktop (`src/gui/`)
-*   **`app.py`:** Orquestador interactivo en Tkinter. Utiliza una cola segura de subprocesos (`queue.Queue`) para delegar el escaneo intensivo a un *Worker Thread*, evitando así que la interfaz gráfica congele el sistema operativo de la estación.
-*   **`components.py`:** Fábricas funcionales (*closures*) de elementos visuales tácticos. Desecha la herencia profunda típica de OOP en favor de funciones puras. Implementa un sistema avanzado de pegado inteligente mediante captura de portapapeles (`SMART_PASTE_REGEX`).
-*   **`theme.py`:** Centraliza las variables cromáticas (Estilo *Cyber-Goth*) limitando la fatiga visual de los operadores en sesiones prolongadas.
+* **`auditor.spec`:** Especificación de empaquetado para PyInstaller. Configura los recursos embebidos (catálogo de ecosistemas, plantillas, íconos) y compila la aplicación en un binario ejecutable único para distribución en Releases.
+* **`pytest.ini`:** Archivo de configuración para testing automatizado. Fija `pythonpath = .` y localiza la suite de pruebas en el directorio `tests/` para evitar errores de resolución de paquetes.
+* **`requirements.txt`:** Especificación de dependencias fijadas (Flask, requests, packaging, pyinstaller, pytest, etc.).
 
-## 4. Pruebas e Infraestructura
-*   **`pytest.ini` & `tests/`:** Define el entorno de validación automática. Asegura que el intérprete reconozca el directorio raíz como base (`pythonpath = .`), permitiendo ejecutar las aserciones sobre `auditor` e `inventory_manager` en ambientes de integración continua (CI) de forma aislada.
-*   **`scripts/update_ecosystems.py`:** Utilidad independiente diseñada para sincronizar dinámicamente el diccionario de ecosistemas válidos desde los buckets de Google Cloud de OSV.
+---
+
+## 2. Directorio `data/` (Persistencia)
+
+* **`inventory.json`:** Almacén de datos persistente. Contiene el nombre del proyecto bajo análisis, fecha de última modificación y la lista de dependencias auditadas.
+* **`osv_ecosystems.json`:** Catálogo de ecosistemas soportados, mapeando nombres canónicos de OSV con nombres legibles y alias comunes para autocompletado predictivo.
+* **`cache.json`:** Almacenamiento local temporal para optimizar consultas de red y evitar llamadas repetitivas.
+
+---
+
+## 3. Directorio `scripts/` (Utilitarios)
+
+* **`update_ecosystems.py`:** Herramienta administrativa para sincronizar el catálogo de tecnologías. Descarga la lista viva desde el bucket oficial de Google OSV (`ecosystems.txt`), aplica el mapeo de alias y sobreescribe `data/osv_ecosystems.json`.
+
+---
+
+## 4. Directorio `src/` (Núcleo Funcional / Core)
+
+* **`config.py`:** Centraliza constantes de infraestructura (timeouts de red, reintentos, URLs oficiales de OSV.dev) y funciones de validación funcional inmutable (`validate_dependency`, `parse_inventory_content`).
+* **`inventory_manager.py`:** Implementa las operaciones CRUD puras del inventario (`add_dependency`, `update_dependency`, `delete_dependency`). Contiene la lógica de validación de sintaxis contra operadores de rango abierto (`^`, `~`, `*`) y la rutina de persistencia atómica `save_inventory_atomic`.
+* **`auditor.py`:** Motor principal de auditoría. Ejecuta consultas HTTP por lote hacia OSV.dev, administra el `ThreadPoolExecutor` para hidratación paralela de manifiestos, filtra hashes SHA-1 y determina si el hallazgo tiene parche disponible o califica como Zero-Day.
+* **`scanner.py`:** Módulo de consulta individual con retroceso exponencial (*exponential backoff*), mantenido como alternativa de contingencia para conexiones con alta latencia o pérdida de paquetes.
+* **`reporter.py`:** Módulo de salida y generación de reportes estructurados en Markdown. Incluye la plantilla de asistencia para Zero-Days con prompts listos para interactuar con modelos de lenguaje DevSecOps.
+
+---
+
+## 5. Directorio `src/gui/` (Interfaz de Escritorio)
+
+* **`app.py`:** Ensamblador de la ventana principal de Tkinter. Orquesta el ciclo de eventos sin clases mediante clausuras funcionales y administra la comunicación asíncrona mediante colas de mensajes (`queue.Queue`).
+* **`components.py`:** Fábricas de widgets desacopladas. Incluye:
+  * Entradas de texto con soporte para `Smart-Paste` por expresión regular.
+  * Selector desplegable (`ttk.Combobox`) con filtrado predictivo y autocompletado mediante la tecla `[Tab]`.
+  * Banner de retroalimentación de estado transitorio (sin diálogos modales intrusivos).
+* **`theme.py`:** Definición centralizada del tema *Dark Tactical / Cyber-Goth* (paleta grafito frío `#111318`, acentos cyan `#38bdf8`, semáforos de vulnerabilidad esmeralda/ámbar/carmesí) y estilización para `ttk.Style`.
+
+---
+
+## 6. Directorio `src/web/` (Portal Web Intranet)
+
+* **`app.py`:** Controlador web basado en Flask. Expone rutas REST y gestión CRUD sobre el inventario local mediante peticiones HTTP estándar. Implementa el ciclo de edición en línea sin dependencias pesadas de sesión.
+* **`templates/index.html`:** Plantilla de interfaz web construida en HTML5 y CSS3 nativo. Reproduce fielmente la paleta ergonómica del cliente de escritorio, integrando soporte para acciones de edición rápida, eliminación de registros y visualización de mitigaciones mediante insignias tácticas.
