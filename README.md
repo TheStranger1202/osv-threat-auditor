@@ -61,12 +61,7 @@ Si deseas auditar el código, agregar funcionalidades o compilar el proyecto man
      ```
      *Acceso local:* `http://localhost:5000`
 
-4. **Ejecutar Suite de Pruebas Unitarias:**
-   ```bash
-   pytest
-   ```
-
-5. **Generar el ejecutable standalone con PyInstaller:**
+4. **Generar el ejecutable standalone con PyInstaller:**
    ```bash
    pyinstaller auditor.spec --clean
    ```
