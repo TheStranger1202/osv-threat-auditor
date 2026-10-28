@@ -1,9 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
-import os
 
 block_cipher = None
 
-# Incluir explícitamente el catálogo de ecosistemas dentro del ejecutable
 added_files = [
     ('data/osv_ecosystems.json', 'data'),
 ]
@@ -13,7 +11,14 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=added_files,
-    hiddenimports=[],
+    hiddenimports=[
+        'packaging',
+        'packaging.version',
+        'packaging.specifiers',
+        'requests',
+        'urllib3',
+        'charset_normalizer',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -33,14 +38,14 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='OSV_Threat_Auditor',
+    name='OSV_Threat_Auditor_Desktop',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False, # Mantiene la aplicación en modo ventana pura, sin consola negra de fondo
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
