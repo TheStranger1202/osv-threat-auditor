@@ -18,6 +18,7 @@ from src.inventory_manager import (
     delete_dependency,
     load_ecosystem_catalog,
     save_inventory_atomic,
+    update_dependency,
 )
 
 CATALOG_PATH: Path = DATA_DIR / "osv_ecosystems.json"
@@ -26,7 +27,6 @@ INVENTORY_PATH: Path = DATA_DIR / "inventory.json"
 app = Flask(__name__, template_folder="templates")
 app.secret_key = "osv-threat-auditor-internal-key"
 
-# Estado en memoria para resultados de auditoría en la sesión del portal
 STATE: dict[str, Any] = {
     "last_audit_results": (),
 }
@@ -52,8 +52,16 @@ def index() -> str:
     catalog = load_ecosystem_catalog(CATALOG_PATH)
     project_name, dependencies = get_current_inventory()
 
-    # Si hay una auditoría activa, mostramos los hallazgos con mitigación;
-    # si no, mostramos el inventario en crudo como 'unscanned'.
+    # Detectar si se solicitó editar un registro específico
+    edit_index_raw = request.args.get("edit")
+    edit_index: int | None = None
+    edit_item: dict[str, str] | None = None
+    if edit_index_raw is not None and edit_index_raw.isdigit():
+        idx = int(edit_index_raw)
+        if 0 <= idx < len(dependencies):
+            edit_index = idx
+            edit_item = dict(dependencies[idx])
+
     if STATE["last_audit_results"]:
         items_to_render = STATE["last_audit_results"]
     else:
@@ -72,6 +80,8 @@ def index() -> str:
         catalog=catalog,
         items=items_to_render,
         total_targets=len(items_to_render),
+        edit_index=edit_index,
+        edit_item=edit_item,
     )
 
 
@@ -89,9 +99,31 @@ def inject_target() -> Any:
     try:
         updated_deps = add_dependency(current_deps, payload, catalog)
         save_inventory_atomic(INVENTORY_PATH, project_name, updated_deps)
-        STATE["last_audit_results"] = ()  # Invalida caché visual al mutar datos
+        STATE["last_audit_results"] = ()
         flash(f"Objetivo '{payload['name']}' inyectado exitosamente.", "success")
     except ValueError as err:
+        flash(str(err), "error")
+
+    return redirect(url_for("index"))
+
+
+@app.route("/update/<int:index>", methods=["POST"])
+def update_target(index: int) -> Any:
+    catalog = load_ecosystem_catalog(CATALOG_PATH)
+    project_name, current_deps = get_current_inventory()
+
+    payload = {
+        "ecosystem": request.form.get("ecosystem", "").strip(),
+        "name": request.form.get("name", "").strip(),
+        "version": request.form.get("version", "").strip(),
+    }
+
+    try:
+        updated_deps = update_dependency(current_deps, index, payload, catalog)
+        save_inventory_atomic(INVENTORY_PATH, project_name, updated_deps)
+        STATE["last_audit_results"] = ()
+        flash(f"Registro '{payload['name']}' actualizado exitosamente.", "success")
+    except (ValueError, IndexError) as err:
         flash(str(err), "error")
 
     return redirect(url_for("index"))
@@ -129,5 +161,4 @@ def run_audit() -> Any:
 
 
 if __name__ == "__main__":
-    # Escucha en todas las interfaces de red locales para acceso en la intranet
     app.run(host="0.0.0.0", port=5000, debug=False)

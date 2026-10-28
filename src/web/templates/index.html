@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OSV // THREAT_AUDITOR [WEB_PORTAL]</title>
+  <title>OSV // THREAT_AUDITOR [PORTAL_WEB]</title>
   <style>
     :root {
       --bg-dark: #111318;
       --bg-panel: #181b22;
+      --bg-hover: #1d212a;
       --bg-input: #1f232c;
       --border: #2d3340;
       --text-main: #d8dee9;
@@ -26,12 +27,12 @@
       background-color: var(--bg-dark);
       color: var(--text-main);
       font-family: Consolas, "Fira Code", Monaco, "Courier New", monospace;
-      font-size: 14px;
-      padding: 24px;
+      font-size: 13px;
+      padding: 28px;
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
     }
 
@@ -40,88 +41,112 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
       border-bottom: 1px solid var(--border);
     }
     .header h1 {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
+      font-weight: 700;
       color: var(--text-accent);
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
     }
     .telemetry {
       color: var(--text-muted);
       font-size: 0.85rem;
+      letter-spacing: 0.5px;
     }
 
     /* Mensajes Flash */
     .flash {
       padding: 10px 14px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       border: 1px solid var(--border);
       background-color: var(--bg-panel);
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .flash.success { color: var(--status-clean); border-color: var(--status-clean); }
-    .flash.error { color: var(--status-alert); border-color: var(--status-alert); }
+    .flash.success { color: var(--status-clean); border-color: rgba(52, 211, 153, 0.3); background-color: rgba(52, 211, 153, 0.05); }
+    .flash.error { color: var(--status-alert); border-color: rgba(248, 113, 113, 0.3); background-color: rgba(248, 113, 113, 0.05); }
 
     /* Panel de Entrada */
     .panel {
       background-color: var(--bg-panel);
       border: 1px solid var(--border);
-      padding: 18px;
+      padding: 16px 20px;
       margin-bottom: 16px;
     }
     .form-grid {
       display: grid;
-      grid-template-columns: 2fr 2fr 1fr auto;
-      gap: 12px;
+      grid-template-columns: 2.2fr 2.5fr 1.2fr auto;
+      gap: 14px;
       align-items: end;
     }
     .form-group label {
       display: block;
       color: var(--text-accent);
-      font-size: 0.8rem;
+      font-size: 0.75rem;
+      font-weight: bold;
       margin-bottom: 6px;
+      letter-spacing: 0.5px;
     }
     input, select {
       width: 100%;
+      height: 36px;
       background-color: var(--bg-input);
       color: var(--text-main);
       border: 1px solid var(--border);
-      padding: 8px 10px;
+      padding: 0 10px;
       font-family: inherit;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       outline: none;
+      transition: border-color 0.15s ease;
     }
     input:focus, select:focus {
       border-color: var(--text-accent);
     }
 
-    /* Botones */
-    button {
+    /* Botones principales */
+    button, a.btn-link {
       font-family: inherit;
       cursor: pointer;
       border: none;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: bold;
-      padding: 9px 16px;
-      transition: background-color 0.15s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
     }
     .btn-primary {
+      height: 36px;
+      padding: 0 16px;
       background-color: var(--btn-primary);
       color: #ffffff;
+      letter-spacing: 0.5px;
     }
     .btn-primary:hover { background-color: var(--btn-hover); }
-    .btn-danger {
-      background-color: transparent;
-      color: var(--status-alert);
+
+    .btn-cancel {
+      height: 36px;
+      padding: 0 12px;
+      background-color: var(--bg-dark);
+      color: var(--text-muted);
       border: 1px solid var(--border);
-      padding: 4px 8px;
     }
-    .btn-danger:hover {
-      background-color: rgba(248, 113, 113, 0.1);
-      border-color: var(--status-alert);
+    .btn-cancel:hover {
+      color: var(--text-main);
+      border-color: var(--text-muted);
+    }
+
+    .form-buttons {
+      display: flex;
+      gap: 6px;
+      align-items: center;
     }
 
     /* Barra de Acciones */
@@ -139,24 +164,85 @@
       border: 1px solid var(--border);
     }
     th, td {
-      padding: 10px 12px;
+      padding: 10px 14px;
       text-align: left;
+      vertical-align: middle;
       border-bottom: 1px solid var(--border);
     }
     th {
       background-color: var(--bg-input);
       color: var(--text-accent);
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
+      height: 38px;
     }
     tr:last-child td { border-bottom: none; }
+    tbody tr {
+      transition: background-color 0.12s ease;
+    }
+    tbody tr:hover {
+      background-color: var(--bg-hover);
+    }
     
-    /* Estados de Auditoría */
-    .status-clean { color: var(--status-clean); }
-    .status-patch { color: var(--status-patch); }
-    .status-alert { color: var(--status-alert); font-weight: bold; }
-    .status-unscanned { color: var(--text-muted); }
+    /* Insignias de Estado (Badges tácticos) */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      font-size: 0.78rem;
+      border: 1px solid transparent;
+      letter-spacing: 0.3px;
+    }
+    .badge-clean {
+      color: var(--status-clean);
+      border-color: rgba(52, 211, 153, 0.25);
+      background-color: rgba(52, 211, 153, 0.08);
+    }
+    .badge-patch {
+      color: var(--status-patch);
+      border-color: rgba(251, 191, 36, 0.25);
+      background-color: rgba(251, 191, 36, 0.08);
+    }
+    .badge-alert {
+      color: var(--status-alert);
+      border-color: rgba(248, 113, 113, 0.3);
+      background-color: rgba(248, 113, 113, 0.1);
+      font-weight: bold;
+    }
+    .badge-unscanned {
+      color: var(--text-muted);
+      border-color: rgba(108, 118, 137, 0.2);
+    }
+
+    /* Botonera de fila (Acciones) */
+    .btn-actions-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .btn-table-action {
+      height: 26px;
+      padding: 0 8px;
+      font-size: 0.75rem;
+      background-color: transparent;
+      border: 1px solid var(--border);
+      letter-spacing: 0.3px;
+    }
+    .btn-table-edit {
+      color: var(--status-patch);
+    }
+    .btn-table-edit:hover {
+      background-color: rgba(251, 191, 36, 0.12);
+      border-color: var(--status-patch);
+    }
+    .btn-table-delete {
+      color: var(--status-alert);
+    }
+    .btn-table-delete:hover {
+      background-color: rgba(248, 113, 113, 0.12);
+      border-color: var(--status-alert);
+    }
   </style>
 </head>
 <body>
@@ -170,38 +256,54 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
-          <div class="flash {{ category }}">{{ message }}</div>
+          <div class="flash {{ category }}">
+            <span>{% if category == 'success' %}✓{% else %}⚠{% endif %}</span>
+            <span>{{ message }}</span>
+          </div>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
-    <!-- Inyección de Objetivos -->
+    <!-- Panel de Formulario: Dinámico entre Inyección o Sobreescritura -->
     <div class="panel">
-      <form action="{{ url_for('inject_target') }}" method="POST" class="form-grid">
+      {% if edit_index is not none %}
+        <form action="{{ url_for('update_target', index=edit_index) }}" method="POST" class="form-grid">
+      {% else %}
+        <form action="{{ url_for('inject_target') }}" method="POST" class="form-grid">
+      {% endif %}
         <div class="form-group">
           <label>> ECOSYSTEM / RUNTIME</label>
           <select name="ecosystem" required>
             {% for item in catalog %}
-              <option value="{{ item.ecosystem }}">{{ item.label }}</option>
+              <option value="{{ item.ecosystem }}" {% if edit_item and edit_item.ecosystem == item.ecosystem %}selected{% endif %}>
+                {{ item.label }}
+              </option>
             {% endfor %}
           </select>
         </div>
         <div class="form-group">
           <label>> TARGET ARTIFACT</label>
-          <input type="text" name="name" placeholder="Ej: requests" required autocomplete="off">
+          <input type="text" name="name" value="{{ edit_item.name if edit_item else '' }}" placeholder="Ej: requests" required autocomplete="off">
         </div>
         <div class="form-group">
           <label>> LOCKED VERSION</label>
-          <input type="text" name="version" placeholder="Ej: 2.25.0" required autocomplete="off">
+          <input type="text" name="version" value="{{ edit_item.version if edit_item else '' }}" placeholder="Ej: 2.25.0" required autocomplete="off">
         </div>
-        <button type="submit" class="btn-primary">[ + INJECT TARGET ]</button>
+        <div class="form-buttons">
+          {% if edit_index is not none %}
+            <button type="submit" class="btn-primary">[ ⚡ OVERWRITE ]</button>
+            <a href="{{ url_for('index') }}" class="btn-link btn-cancel">[ ✕ CANCEL ]</a>
+          {% else %}
+            <button type="submit" class="btn-primary">[ + INJECT TARGET ]</button>
+          {% endif %}
+        </div>
       </form>
     </div>
 
     <!-- Ejecutar Auditoría -->
     <div class="action-bar">
       <form action="{{ url_for('run_audit') }}" method="POST">
-        <button type="submit" class="btn-primary" style="padding: 12px 20px;">[ 🚀 RUN THREAT AUDIT ]</button>
+        <button type="submit" class="btn-primary" style="height: 40px; padding: 0 22px;">[ 🚀 RUN THREAT AUDIT ]</button>
       </form>
     </div>
 
@@ -209,31 +311,38 @@
     <table>
       <thead>
         <tr>
-          <th style="width: 40px; text-align: center;">#</th>
+          <th style="width: 44px; text-align: center;">#</th>
           <th style="width: 140px;">ECOSYSTEM</th>
           <th>ARTIFACT / PKG</th>
           <th style="width: 110px;">VERSION</th>
           <th>AUDIT STATUS</th>
-          <th style="width: 80px; text-align: center;">ACTION</th>
+          <th style="width: 140px; text-align: center;">ACTION</th>
         </tr>
       </thead>
       <tbody>
         {% for item in items %}
           <tr>
             <td style="text-align: center; color: var(--text-muted);">{{ loop.index }}</td>
-            <td>{{ item.ecosystem }}</td>
-            <td style="font-weight: bold;">{{ item.name }}</td>
-            <td>{{ item.version }}</td>
-            <td class="status-{{ item.audit_status }}">{{ item.mitigation }}</td>
+            <td style="color: var(--text-muted);">{{ item.ecosystem }}</td>
+            <td style="font-weight: bold; color: var(--text-main);">{{ item.name }}</td>
+            <td style="color: var(--text-accent);">{{ item.version }}</td>
+            <td>
+              <span class="badge badge-{{ item.audit_status }}">
+                {{ item.mitigation }}
+              </span>
+            </td>
             <td style="text-align: center;">
-              <form action="{{ url_for('remove_target', index=loop.index0) }}" method="POST" style="display:inline;">
-                <button type="submit" class="btn-danger">[ 🗑 ]</button>
-              </form>
+              <div class="btn-actions-cell">
+                <a href="{{ url_for('index', edit=loop.index0) }}" class="btn-link btn-table-action btn-table-edit" title="Editar objetivo">EDIT</a>
+                <form action="{{ url_for('remove_target', index=loop.index0) }}" method="POST" style="display:inline;">
+                  <button type="submit" class="btn-table-action btn-table-delete" title="Purgar objetivo">DEL</button>
+                </form>
+              </div>
             </td>
           </tr>
         {% else %}
           <tr>
-            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">
+            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">
               No hay dependencias registradas en el inventario. Inyecta un objetivo arriba.
             </td>
           </tr>
