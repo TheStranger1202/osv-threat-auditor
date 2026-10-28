@@ -3,27 +3,28 @@ name: Cross-Platform Build & Release
 on:
   push:
     tags:
-      - 'v*' # El flujo se dispara automáticamente al crear un tag (ej. v1.0.0)
+      - 'v*'
 
 permissions:
-  contents: write # Permiso necesario para adjuntar los binarios al Release
+  contents: write
 
 jobs:
   build:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
-            binary_name: OSV_Threat_Auditor
-            asset_name: OSV_Threat_Auditor-Linux
+            ext: ""
+            suffix: "Linux"
           - os: windows-latest
-            binary_name: OSV_Threat_Auditor.exe
-            asset_name: OSV_Threat_Auditor-Windows.exe
+            ext: ".exe"
+            suffix: "Windows.exe"
           - os: macos-latest
-            binary_name: OSV_Threat_Auditor
-            asset_name: OSV_Threat_Auditor-macOS
+            ext: ""
+            suffix: "macOS"
 
     steps:
       - name: Checkout Code
@@ -37,18 +38,26 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller requests packaging
+          pip install -r requirements.txt
+          pip install pyinstaller
 
-      - name: Build with PyInstaller
+      - name: Build Desktop GUI
         run: pyinstaller auditor.spec --clean
 
-      - name: Rename Binary for Clarity
-        run: mv dist/${{ matrix.binary_name }} dist/${{ matrix.asset_name }}
-        shell: bash
+      - name: Build Web Server
+        run: pyinstaller server.spec --clean
 
-      - name: Upload Release Asset
+      - name: Rename Binaries
+        shell: bash
+        run: |
+          mv dist/OSV_Threat_Auditor_Desktop${{ matrix.ext }} dist/OSV_Threat_Auditor_Desktop-${{ matrix.suffix }}
+          mv dist/OSV_Threat_Auditor_Server${{ matrix.ext }} dist/OSV_Threat_Auditor_Server-${{ matrix.suffix }}
+
+      - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/${{ matrix.asset_name }}
+          files: |
+            dist/OSV_Threat_Auditor_Desktop-${{ matrix.suffix }}
+            dist/OSV_Threat_Auditor_Server-${{ matrix.suffix }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
