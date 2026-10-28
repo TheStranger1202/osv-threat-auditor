@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OSV // THREAT_AUDITOR [WEB_PORTAL]</title>
+  <style>
+    :root {
+      --bg-dark: #111318;
+      --bg-panel: #181b22;
+      --bg-input: #1f232c;
+      --border: #2d3340;
+      --text-main: #d8dee9;
+      --text-muted: #6c7689;
+      --text-accent: #38bdf8;
+      --status-clean: #34d399;
+      --status-patch: #fbbf24;
+      --status-alert: #f87171;
+      --btn-primary: #7c3aed;
+      --btn-hover: #6d28d9;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: Consolas, "Fira Code", Monaco, "Courier New", monospace;
+      font-size: 14px;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Telemetría */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .header h1 {
+      font-size: 1.25rem;
+      color: var(--text-accent);
+      letter-spacing: 0.5px;
+    }
+    .telemetry {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* Mensajes Flash */
+    .flash {
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+      background-color: var(--bg-panel);
+      font-size: 0.9rem;
+    }
+    .flash.success { color: var(--status-clean); border-color: var(--status-clean); }
+    .flash.error { color: var(--status-alert); border-color: var(--status-alert); }
+
+    /* Panel de Entrada */
+    .panel {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 2fr 2fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+    .form-group label {
+      display: block;
+      color: var(--text-accent);
+      font-size: 0.8rem;
+      margin-bottom: 6px;
+    }
+    input, select {
+      width: 100%;
+      background-color: var(--bg-input);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--text-accent);
+    }
+
+    /* Botones */
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      font-size: 0.85rem;
+      font-weight: bold;
+      padding: 9px 16px;
+      transition: background-color 0.15s ease;
+    }
+    .btn-primary {
+      background-color: var(--btn-primary);
+      color: #ffffff;
+    }
+    .btn-primary:hover { background-color: var(--btn-hover); }
+    .btn-danger {
+      background-color: transparent;
+      color: var(--status-alert);
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+    }
+    .btn-danger:hover {
+      background-color: rgba(248, 113, 113, 0.1);
+      border-color: var(--status-alert);
+    }
+
+    /* Barra de Acciones */
+    .action-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+    }
+
+    /* Tabla de Resultados */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border);
+    }
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background-color: var(--bg-input);
+      color: var(--text-accent);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    tr:last-child td { border-bottom: none; }
+    
+    /* Estados de Auditoría */
+    .status-clean { color: var(--status-clean); }
+    .status-patch { color: var(--status-patch); }
+    .status-alert { color: var(--status-alert); font-weight: bold; }
+    .status-unscanned { color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>OSV // THREAT_AUDITOR [PORTAL_WEB]</h1>
+      <div class="telemetry">[PROJECT: {{ project_name }} | TARGETS: {{ "%02d"|format(total_targets) }}]</div>
+    </div>
+
+    <!-- Banner de Notificaciones -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Inyección de Objetivos -->
+    <div class="panel">
+      <form action="{{ url_for('inject_target') }}" method="POST" class="form-grid">
+        <div class="form-group">
+          <label>> ECOSYSTEM / RUNTIME</label>
+          <select name="ecosystem" required>
+            {% for item in catalog %}
+              <option value="{{ item.ecosystem }}">{{ item.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>> TARGET ARTIFACT</label>
+          <input type="text" name="name" placeholder="Ej: requests" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>> LOCKED VERSION</label>
+          <input type="text" name="version" placeholder="Ej: 2.25.0" required autocomplete="off">
+        </div>
+        <button type="submit" class="btn-primary">[ + INJECT TARGET ]</button>
+      </form>
+    </div>
+
+    <!-- Ejecutar Auditoría -->
+    <div class="action-bar">
+      <form action="{{ url_for('run_audit') }}" method="POST">
+        <button type="submit" class="btn-primary" style="padding: 12px 20px;">[ 🚀 RUN THREAT AUDIT ]</button>
+      </form>
+    </div>
+
+    <!-- Tabla de Dependencias y Hallazgos -->
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 40px; text-align: center;">#</th>
+          <th style="width: 140px;">ECOSYSTEM</th>
+          <th>ARTIFACT / PKG</th>
+          <th style="width: 110px;">VERSION</th>
+          <th>AUDIT STATUS</th>
+          <th style="width: 80px; text-align: center;">ACTION</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td style="text-align: center; color: var(--text-muted);">{{ loop.index }}</td>
+            <td>{{ item.ecosystem }}</td>
+            <td style="font-weight: bold;">{{ item.name }}</td>
+            <td>{{ item.version }}</td>
+            <td class="status-{{ item.audit_status }}">{{ item.mitigation }}</td>
+            <td style="text-align: center;">
+              <form action="{{ url_for('remove_target', index=loop.index0) }}" method="POST" style="display:inline;">
+                <button type="submit" class="btn-danger">[ 🗑 ]</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">
+              No hay dependencias registradas en el inventario. Inyecta un objetivo arriba.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
