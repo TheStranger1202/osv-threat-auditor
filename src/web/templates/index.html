@@ -57,7 +57,7 @@
       letter-spacing: 0.5px;
     }
 
-    /* Mensajes Flash */
+    /* Mensajes Flash y Feedback */
     .flash {
       padding: 10px 14px;
       margin-bottom: 16px;
@@ -185,7 +185,7 @@
       background-color: var(--bg-hover);
     }
     
-    /* Insignias de Estado (Badges tácticos) */
+    /* Insignias de Estado */
     .badge {
       display: inline-block;
       padding: 3px 8px;
@@ -214,7 +214,7 @@
       border-color: rgba(108, 118, 137, 0.2);
     }
 
-    /* Botonera de fila (Acciones) */
+    /* Acciones en Tabla */
     .btn-actions-cell {
       display: inline-flex;
       align-items: center;
@@ -229,20 +229,10 @@
       border: 1px solid var(--border);
       letter-spacing: 0.3px;
     }
-    .btn-table-edit {
-      color: var(--status-patch);
-    }
-    .btn-table-edit:hover {
-      background-color: rgba(251, 191, 36, 0.12);
-      border-color: var(--status-patch);
-    }
-    .btn-table-delete {
-      color: var(--status-alert);
-    }
-    .btn-table-delete:hover {
-      background-color: rgba(248, 113, 113, 0.12);
-      border-color: var(--status-alert);
-    }
+    .btn-table-edit { color: var(--status-patch); }
+    .btn-table-edit:hover { background-color: rgba(251, 191, 36, 0.12); border-color: var(--status-patch); }
+    .btn-table-delete { color: var(--status-alert); }
+    .btn-table-delete:hover { background-color: rgba(248, 113, 113, 0.12); border-color: var(--status-alert); }
   </style>
 </head>
 <body>
@@ -252,7 +242,12 @@
       <div class="telemetry">[PROJECT: {{ project_name }} | TARGETS: {{ "%02d"|format(total_targets) }}]</div>
     </div>
 
-    <!-- Banner de Notificaciones -->
+    <!-- Banner dinámico para notificaciones Flash y eventos de Smart-Paste -->
+    <div id="smart-paste-banner" class="flash success" style="display: none;">
+      <span>✓</span>
+      <span id="smart-paste-msg"></span>
+    </div>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -264,7 +259,7 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Panel de Formulario: Dinámico entre Inyección o Sobreescritura -->
+    <!-- Panel de Formulario -->
     <div class="panel">
       {% if edit_index is not none %}
         <form action="{{ url_for('update_target', index=edit_index) }}" method="POST" class="form-grid">
@@ -272,8 +267,8 @@
         <form action="{{ url_for('inject_target') }}" method="POST" class="form-grid">
       {% endif %}
         <div class="form-group">
-          <label>> ECOSYSTEM / RUNTIME</label>
-          <select name="ecosystem" required>
+          <label for="select-ecosystem">> ECOSYSTEM / RUNTIME</label>
+          <select id="select-ecosystem" name="ecosystem" required>
             {% for item in catalog %}
               <option value="{{ item.ecosystem }}" {% if edit_item and edit_item.ecosystem == item.ecosystem %}selected{% endif %}>
                 {{ item.label }}
@@ -282,12 +277,12 @@
           </select>
         </div>
         <div class="form-group">
-          <label>> TARGET ARTIFACT</label>
-          <input type="text" name="name" value="{{ edit_item.name if edit_item else '' }}" placeholder="Ej: requests" required autocomplete="off">
+          <label for="input-name">> TARGET ARTIFACT (Soporta Smart-Paste)</label>
+          <input id="input-name" type="text" name="name" value="{{ edit_item.name if edit_item else '' }}" placeholder="Ej: django==1.11.0 o requests" required autocomplete="off">
         </div>
         <div class="form-group">
-          <label>> LOCKED VERSION</label>
-          <input type="text" name="version" value="{{ edit_item.version if edit_item else '' }}" placeholder="Ej: 2.25.0" required autocomplete="off">
+          <label for="input-version">> LOCKED VERSION</label>
+          <input id="input-version" type="text" name="version" value="{{ edit_item.version if edit_item else '' }}" placeholder="Ej: 2.25.0" required autocomplete="off">
         </div>
         <div class="form-buttons">
           {% if edit_index is not none %}
@@ -350,5 +345,57 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Smart-Paste Engine -->
+  <script>
+    (function () {
+      const inputName = document.getElementById("input-name");
+      const inputVer = document.getElementById("input-version");
+      const selectEco = document.getElementById("select-ecosystem");
+      const banner = document.getElementById("smart-paste-banner");
+      const bannerMsg = document.getElementById("smart-paste-msg");
+
+      // Regex equivalente al SMART_PASTE_REGEX de Python en components.py
+      const SMART_PASTE_REGEX = /^(?:([a-zA-Z0-9\.\-]+):)?([a-zA-Z0-9_\-\.\/]+)(?:==|@)([a-zA-Z0-9_\-\.]+)$/;
+
+      if (!inputName) return;
+
+      inputName.addEventListener("paste", function (event) {
+        const text = (event.clipboardData || window.clipboardData).getData("text").trim();
+        const match = text.match(SMART_PASTE_REGEX);
+
+        if (match) {
+          event.preventDefault(); // Evita que se pegue el texto crudo en inputName
+
+          const eco = match[1];  // Grupo opcional ecosistema
+          const name = match[2]; // Nombre del paquete
+          const ver = match[3];  // Versión fijada
+
+          inputName.value = name;
+          inputVer.value = ver;
+
+          // Si el texto incluye ecosistema (ej. pypi:django==1.11.0 o npm:express@4.17.1), se busca en el select
+          if (eco) {
+            const ecoLower = eco.toLowerCase();
+            for (let i = 0; i < selectEco.options.length; i++) {
+              const opt = selectEco.options[i];
+              if (
+                opt.value.toLowerCase() === ecoLower ||
+                opt.text.toLowerCase().includes(ecoLower)
+              ) {
+                selectEco.selectedIndex = i;
+                break;
+              }
+            }
+          }
+
+          // Feedback visual
+          bannerMsg.textContent = `Smart-Paste detectado: ${name} v${ver}${eco ? ' [' + eco + ']' : ''}`;
+          banner.style.display = "flex";
+          setTimeout(() => { banner.style.display = "none"; }, 3500);
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
