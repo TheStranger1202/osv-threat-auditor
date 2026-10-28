@@ -9,14 +9,14 @@ El sistema opera bajo un desacoplamiento estricto de capas: la capa de presentac
 ```mermaid
 flowchart TD
     subgraph Presentación ["Capa de Presentación (UI)"]
-        GUI["Desktop GUI\n(src/gui/app.py)"]
-        WEB["Web Portal\n(src/web/app.py)"]
+        GUI["Desktop GUI<br>(src/gui/app.py)"]
+        WEB["Web Portal<br>(src/web/app.py)"]
     end
 
     subgraph Core ["Núcleo de Negocio (Core)"]
-        AUDITOR["Auditor Engine\n(src/auditor.py)"]
-        INV_MANAGER["Inventory Manager\n(src/inventory_manager.py)"]
-        REPORTER["Report Engine\n(src/reporter.py)"]
+        AUDITOR["Auditor Engine<br>(src/auditor.py)"]
+        INV_MANAGER["Inventory Manager<br>(src/inventory_manager.py)"]
+        REPORTER["Report Engine<br>(src/reporter.py)"]
     end
 
     subgraph Persistencia ["Persistencia Atómica"]
@@ -27,18 +27,18 @@ flowchart TD
     OSV_API(("Google OSV.dev API"))
 
     %% Interacciones UI -> Core
-    GUI -->|Operaciones CRUD| INV_MANAGER
-    GUI -->|Escaneo concurrente| AUDITOR
-    WEB -->|Rutas REST / CRUD| INV_MANAGER
-    WEB -->|Solicitudes de auditoría| AUDITOR
+    GUI -->|"Operaciones CRUD"| INV_MANAGER
+    GUI -->|"Escaneo concurrente"| AUDITOR
+    WEB -->|"Rutas REST / CRUD"| INV_MANAGER
+    WEB -->|"Solicitudes de auditoría"| AUDITOR
 
     %% Interacciones Core -> Persistencia
-    INV_MANAGER -->|Escritura Atómica\n(.tmp -> fsync -> replace)| JSON_INV
-    INV_MANAGER -.->|Consulta de catálogo| JSON_ECO
+    INV_MANAGER -->|"Escritura Atómica<br>(.tmp -> fsync -> replace)"| JSON_INV
+    INV_MANAGER -.->|"Consulta de catálogo"| JSON_ECO
 
     %% Interacciones Core -> Externo
-    AUDITOR <-->|1. querybatch\n2. ThreadPoolExecutor| OSV_API
-    AUDITOR -->|Formateo Zero-Days| REPORTER
+    AUDITOR <-->|"1. querybatch<br>2. ThreadPoolExecutor(15)"| OSV_API
+    AUDITOR -->|"Formateo Zero-Days"| REPORTER
 ```
 
 ---
