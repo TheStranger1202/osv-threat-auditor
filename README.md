@@ -1,49 +1,50 @@
-# OSV Threat Auditor
+# OSV // THREAT_AUDITOR [v1.0.0]
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
-![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue.svg)
-![OSV.dev](https://img.shields.io/badge/Powered_by-OSV.dev-purple.svg)
+Herramienta interna de auditoría de seguridad (DevSecOps) orientada a la detección de vulnerabilidades conocidas (CVEs) y Zero-Days. Utiliza la base de datos oficial de vulnerabilidades de código abierto (**OSV.dev**) de Google.
 
-Una herramienta de escritorio con interfaz gráfica (GUI) para auditar vulnerabilidades en dependencias de software, respaldada por la base de datos oficial de Google **OSV.dev**. 
+Este proyecto opera bajo principios de inmutabilidad, persistencia atómica y concurrencia. Soporta dos interfaces compartiendo el mismo núcleo lógico:
+1. **Desktop Client:** Interfaz Tkinter nativa para estaciones de trabajo.
+2. **Web Portal:** Aplicación Flask ligera para acceso en red local o corporativa.
 
-Diseñada con una estética táctica (*cyber-goth*) y una arquitectura funcional, permite a los analistas de seguridad y desarrolladores escanear proyectos enteros sin necesidad de usar la terminal ni instalar complejas cadenas de dependencias.
+## 🚀 Inicio Rápido e Instalación
 
-## ✨ Características Principales
+Debido a las normativas de PEP 668 en distribuciones modernas (Linux/Debian/Ubuntu), se requiere un entorno virtual administrado:
 
-* **Auditoría Asíncrona:** Motor de red basado en `ThreadPoolExecutor` que realiza consultas por lotes (batch) e hidrata los datos en paralelo sin congelar la interfaz.
-* **Extracción Profunda de Parches:** Algoritmo recursivo que inspecciona los manifiestos JSON de OSV para descubrir versiones de remediación (`fixed`), filtrando automáticamente hashes de Git (SHA-1) para mostrar únicamente versiones semánticas limpias.
-* **Smart-Paste:** Pega dependencias directamente con el formato `paquete==version` (ej. `django==1.11.0`) y el sistema autocompletará los campos.
-* **Catálogo Integrado:** Selector predictivo con más de 40 ecosistemas soportados (PyPI, npm, Maven, Go, Rust, AlmaLinux, etc.).
-* **Arquitectura Inmutable:** Estado gestionado mediante clausuras y funciones puras, garantizando persistencia atómica en disco (`data/inventory.json`).
+```bash
+# 1. Instalar dependencias del sistema operativo (si es necesario)
+sudo apt update && sudo apt install -y python3-venv python3-full
 
-## 🚀 Instalación (Usuarios Finales)
+# 2. Crear y activar el entorno virtual
+python3 -m venv .venv
+source .venv/bin/activate
 
-No necesitas instalar Python. Descarga el ejecutable para tu sistema operativo y ábrelo directamente:
+# 3. Instalar dependencias del proyecto
+pip install -r requirements.txt
+```
 
-1. Ve a la pestaña **[Releases](../../releases)** del repositorio.
-2. Descarga el binario correspondiente a tu sistema (Windows, Linux o macOS).
-3. En Linux/macOS, recuerda otorgar permisos de ejecución (`chmod +x OSV_Threat_Auditor-Linux`) la primera vez.
+## 🖥️ Modos de Ejecución
 
-## 🛠️ Desarrollo (Compilación Local)
+Ambas interfaces leen y escriben sobre el mismo inventario persistente (`data/inventory.json`).
 
-
-Si deseas modificar el código o compilar el proyecto manualmente:
-
-1. **Clona el repositorio:**
-   ```bash
-   git clone [https://github.com/TuUsuario/osv-threat-auditor.git](https://github.com/TuUsuario/osv-threat-auditor.git)
-   cd osv-threat-auditor
-
-3. **Instala las dependencias:**
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate  # En Windows: .venv\Scripts\activate
-    pip install -r requirements.txt
-
-3. **Ejecuta la interfaz en modo desarrollo:**
+*   **Modo Escritorio (Desktop):** Ideal para analistas locales.
     ```bash
     python -m src.gui.app
-
-4. **Genera el ejecutable con PyInstaller:**
+    ```
+*   **Modo Web (Portal):** Levanta un servidor Flask accesible desde cualquier navegador.
     ```bash
-    pyinstaller auditor.spec --clean
+    python -m src.web.app
+    ```
+    *Acceso local:* `http://localhost:5000`
+
+## 🧪 Pruebas Unitarias
+
+El proyecto cuenta con un entorno de pruebas configurado vía `pytest`. Para ejecutar la suite completa de tests:
+
+```bash
+pytest
+```
+
+---
+*Para detalles técnicos profundos, revisa el directorio `/docs`:*
+* [Arquitectura y Diseño](docs/ARCHITECTURE.md)
+* [Referencia de Módulos](docs/MODULES.md)
